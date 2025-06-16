@@ -136,3 +136,71 @@ At exactly 768 px the menu “ghosts” in and out.
 }
 
 ```
+
+## Task 3
+
+## Goal
+
+Goal
+
+1. Ask the model why Total Blocking Time is high.
+2. Rewrite Dashboard.tsx so the heavy loop runs in a Web Worker (no UI jank).
+3. Provide a metric checklist to re-measure.
+4. Stretch: auto-generate a commit message + PR description summarising the fix.
+
+**Result**
+
+1. Unswer:
+   You're seeing a high Total Blocking Time (TBT) because of this line in your useEffect:
+
+```
+for (let i = 0; i < 1e8; i++) { t += i; }
+```
+
+This runs on the main thread, immediately after the component mounts, and:
+
+- Blocks the browser from handling user input, rendering, animations, etc.
+- Delays the "Time to Interactive" (TTI), which contributes directly to high TBT.
+
+2. Code:
+
+```
+import React, { useEffect, useState } from "react"
+
+export default function Dashboard() {
+const [d, setD] = useState<number | null>(null)
+
+useEffect(() => {
+const workerCode = `  self.onmessage = function () {
+        let t = 0;
+        for (let i = 0; i < 1e8; i++) {
+          t += i;
+        }
+        self.postMessage(t);
+      };`
+
+    const blob = new Blob([workerCode], { type: "application/javascript" })
+    const worker = new Worker(URL.createObjectURL(blob))
+
+    worker.onmessage = (e) => {
+      setD(e.data)
+      worker.terminate()
+    }
+
+    worker.postMessage("start")
+
+    return () => {
+      worker.terminate()
+    }
+
+}, [])
+
+return <div>{d !== null ? d : "Вычисление..."}</div>
+}
+```
+
+3. Checklists:
+
+![Default](images/firstMetricChecklist.png)
+
+![In a web Worker](images/secondMetricChecklist.png)
