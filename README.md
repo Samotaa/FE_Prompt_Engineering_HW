@@ -78,3 +78,61 @@
           </button>
         </div>
 ```
+
+## Task 2
+
+## Goal
+
+At exactly 768 px the menu “ghosts” in and out.
+
+1. Use ChatGPT/ Cursor to identify the root cause of the slide-down glitch.
+2. Produce a patched styles.css (CSS fence, nothing extra) that fixes it.
+
+**Result**
+
+```
+/* styles.css */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu {
+  display: flex;
+  gap: 2rem;
+}
+
+/* Patch for menu slide-down glitch at 768px breakpoint */
+@media (max-width: 767.98px) {
+  .menu {
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .menu.open {
+    max-height: 1000px; /* large enough for menu content */
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .menu {
+    transition: none;
+    max-height: none;
+    opacity: 1;
+    overflow: visible;
+    pointer-events: auto;
+  }
+  .menu.open {
+    max-height: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+```
